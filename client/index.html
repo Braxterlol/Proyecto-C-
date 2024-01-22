@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Encuesta en Vivo</title>
+</head>
+<body>
+  <h1>Encuesta en Vivo</h1>
+  <label for="encuestaId">ID de Encuesta:</label>
+  <input type="text" id="encuestaId">
+  <button onclick="joinEncuesta()">Unirse a la Encuesta</button>
+  <div id="question-container"></div>
+  <ul id="options-list"></ul>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io('/encuestas');
+
+    function joinEncuesta() {
+      const encuestaId = document.getElementById('encuestaId').value;
+      // Unirse a la sala correspondiente a la encuesta
+      socket.emit('join', encuestaId);
+    }
+
+    // Manejar la pregunta recibida
+    socket.on('question', (question) => {
+      document.getElementById('question-container').innerText = question.text;
+      const optionsList = document.getElementById('options-list');
+      optionsList.innerHTML = '';
+      question.options.forEach((option, index) => {
+        const li = document.createElement('li');
+        li.innerText = `${index + 1}. ${option}`;
+        li.addEventListener('click', () => {
+          const encuestaId = document.getElementById('encuestaId').value;
+          socket.emit('answer', { encuestaId, answer: option });
+        });
+        optionsList.appendChild(li);
+      });
+    });
+
+    // Actualizar los resultados en tiempo real
+    socket.on('updateResults', (answer) => {
+      console.log(`Resultado actualizado: ${answer}`);
+      // Puedes mostrar los resultados en la interfaz de usuario si lo deseas
+    });
+  </script>
+</body>
+</html>
